@@ -2,291 +2,289 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>慰霊地マッピングサイト</title>
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <!-- PDF export libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Memory Maps</title>
+    <!-- Leaflet and related plugins CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"/>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css"/>
+
     <style>
-        /* Reset and basic styles */
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; font-family: 'Helvetica Neue', Arial, sans-serif; }
-        
-        /* Layout */
-        .container { display: flex; flex-direction: column; height: 100%; }
-        
+        :root {
+            --primary-color: #5DBBAA;
+            --primary-light-color: #e0f2ef;
+            --background-color: #F8F9FA;
+            --text-color: #212529;
+            --light-text-color: #6c757d;
+            --border-color: #dee2e6;
+            --white-color: #FFFFFF;
+            --shadow-color: rgba(0, 0, 0, 0.08);
+        }
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--background-color); color: var(--text-color);
+            overflow: hidden;
+        }
+
+        .app-container { display: flex; flex-direction: column; height: 100%; position: relative; }
+        #map { width: 100%; height: 100%; z-index: 1; background-color: #f0f0f0; }
+
         /* Header */
         header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 20px;
-            background-color: #fff;
-            border-bottom: 1px solid #ddd;
-            flex-shrink: 0;
+            position: absolute; top: 15px; left: 15px; right: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 20px; background-color: var(--white-color); border-radius: 12px;
+            box-shadow: 0 4px 12px var(--shadow-color); z-index: 1001;
         }
-        header h1 { margin: 0; font-size: 1.5em; }
-        
-        /* PDF Button */
-        .pdf-button {
-            padding: 8px 16px;
-            background-color: #4A90E2;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.9em;
-            transition: background-color 0.3s;
+        #menu-toggle { background: none; border: none; cursor: pointer; padding: 5px; }
+        #menu-toggle svg { width: 24px; height: 24px; color: var(--text-color); }
+        .header-title h1 { margin: 0; font-size: 1.2em; font-weight: 600; }
+        .add-button {
+            width: 36px; height: 36px; background-color: var(--primary-light-color); color: var(--primary-color);
+            border: 1px solid var(--primary-color); border-radius: 50%; font-size: 24px;
+            display: flex; justify-content: center; align-items: center; cursor: pointer; transition: background-color 0.3s;
         }
-        .pdf-button:hover { background-color: #357ABD; }
+        .add-button:hover { background-color: #d4e9e7; }
         
-        /* Map container */
-        #map { flex-grow: 1; background-color: #eee; }
-        
-        /* Info Panel */
+        /* Sidebar, Info Panel, etc. */
+        .sidebar {
+            position: fixed; top: 0; left: 0; width: 320px; height: 100%;
+            background-color: var(--white-color); box-shadow: 2px 0 15px var(--shadow-color);
+            transform: translateX(-100%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 2000; display: flex; flex-direction: column;
+        }
+        .sidebar.active { transform: translateX(0); }
+        .sidebar-header { padding: 20px; border-bottom: 1px solid var(--border-color); }
+        .sidebar-header h2 { margin: 0; font-size: 1.5em; }
+        .sidebar-content { padding: 10px; overflow-y: auto; flex-grow: 1; }
+        #search-box {
+            width: 100%; padding: 12px 15px; border: 1px solid var(--border-color);
+            border-radius: 8px; font-size: 1em; box-sizing: border-box; margin-bottom: 10px;
+        }
+        #locations-list { list-style: none; padding: 0; margin: 0; }
+        .location-item {
+            padding: 15px; border-bottom: 1px solid var(--border-color); cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .location-item:hover { background-color: var(--primary-light-color); }
+        .location-item h3 { margin: 0 0 4px; font-size: 1em; font-weight: 600; }
+        .location-item p { margin: 0; font-size: 0.9em; color: var(--light-text-color); }
+
         .info-panel {
-            position: fixed;
-            right: -100%; /* Initially hidden */
-            top: 0;
-            width: 350px;
-            height: 100%;
-            background-color: white;
-            box-shadow: -2px 0 5px rgba(0,0,0,0.1);
-            transition: right 0.4s ease-in-out;
-            z-index: 1000;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
+            position: fixed; top: 0; right: 0; width: 350px; height: 100%;
+            background-color: var(--white-color); box-shadow: -2px 0 15px var(--shadow-color);
+            transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 2001; display: flex; flex-direction: column;
         }
-        .info-panel.active { right: 0; }
-        
-        .info-panel h2 {
-            margin: 0;
-            padding: 20px;
-            font-size: 1.2em;
-            background-color: #f7f7f7;
-            border-bottom: 1px solid #ddd;
+        .info-panel.active { transform: translateX(0); }
+        .info-panel-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px; border-bottom: 1px solid var(--border-color);
         }
-        
-        .info-content { padding: 20px; }
-        .info-content p { margin: 0 0 15px; line-height: 1.6; }
-        .info-content strong { color: #333; }
-        .info-content a { color: #4A90E2; text-decoration: none; }
-        .info-content a:hover { text-decoration: underline; }
-        
-        /* Close button for panel */
-        .close-btn {
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            font-size: 2em;
-            font-weight: bold;
-            color: #aaa;
-            background: none;
-            border: none;
-            cursor: pointer;
-        }
+        .info-panel-header h2 { margin: 0; font-size: 1.3em; color: var(--primary-color); }
+        .close-btn { background: none; border: none; font-size: 2em; color: #aaa; cursor: pointer; }
+        .info-panel-content { padding: 20px; overflow-y: auto; }
+        .info-panel-content p { margin: 0 0 18px; line-height: 1.6; }
+        .info-panel-content strong { color: var(--text-color); display: block; margin-bottom: 4px; font-size: 0.9em; text-transform: uppercase; color: #888; }
+        .info-panel-content a { color: var(--primary-color); text-decoration: none; word-break: break-all; }
 
-        /* Loading Overlay */
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            font-size: 1.2em;
-            color: #333;
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4); opacity: 0; visibility: hidden;
+            transition: opacity 0.4s, visibility 0s 0.4s; z-index: 1999;
         }
-
-        /* Responsive */
-        @media (max-width: 600px) {
-            .info-panel { width: 100%; }
-            header h1 { font-size: 1.2em; }
-        }
+        .overlay.active { opacity: 1; visibility: visible; transition: opacity 0.4s; }
     </style>
 </head>
 <body>
-
-    <div class="container">
+    <div class="app-container">
         <header>
-            <h1>慰霊地マップ</h1>
-            <button id="pdf-download" class="pdf-button">PDFで保存</button>
+            <button id="menu-toggle" aria-label="Open menu">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+            </button>
+            <div class="header-title"><h1>Memory Maps</h1></div>
+            <button class="add-button" aria-label="Add new location">+</button>
         </header>
-        <div id="map"></div>
-    </div>
 
-    <div id="info-panel" class="info-panel">
-        <button id="close-panel" class="close-btn">&times;</button>
-        <h2><span id="info-name">場所の名前</span></h2>
-        <div class="info-content">
-            <p><strong>都道府県:</strong> <span id="info-prefecture">---</span></p>
-            <p><strong>取材記事:</strong> <a id="info-article" href="#" target="_blank" rel="noopener noreferrer"></a></p>
-            <p><strong>誕生日/開設日など:</strong> <span id="info-date">---</span></p>
-            <p><strong>アクセス:</strong> <span id="info-access">---</span></p>
-            <p><strong>住所:</strong> <span id="info-address">---</span></p>
+        <main id="map"></main>
+
+        <div id="sidebar" class="sidebar">
+            <div class="sidebar-header"><h2>場所リスト</h2></div>
+            <div class="sidebar-content">
+                <input type="text" id="search-box" placeholder="場所を検索...">
+                <ul id="locations-list"></ul>
+            </div>
         </div>
-    </div>
 
-    <div id="loading" class="loading-overlay" style="display: none;">
-        <p>地図データを読み込んでいます...</p>
+        <div id="info-panel" class="info-panel">
+             <div class="info-panel-header">
+                <h2 id="info-name">場所の名前</h2>
+                <button id="close-info-panel" class="close-btn">&times;</button>
+            </div>
+            <div class="info-panel-content">
+                <p><strong>住所:</strong> <span id="info-address">---</span></p>
+                <p><strong>都道府県:</strong> <span id="info-prefecture">---</span></p>
+                <p><strong>関連URL:</strong> <a id="info-url" href="#" target="_blank" rel="noopener noreferrer"></a></p>
+                <p><strong>訪問日など:</strong> <span id="info-date">---</span></p>
+                <p><strong>アクセス:</strong> <span id="info-access">---</span></p>
+            </div>
+        </div>
+        <div id="overlay" class="overlay"></div>
     </div>
     
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
     <script>
-        // --- 設定 ---
-        // !!! 要設定 !!! GASをデプロイした際に取得したウェブアプリのURLに書き換えてください
-        const gasWebAppUrl = 'https://script.google.com/macros/s/AKfycbya3uc7FnDYxXxj4CGB6qChpyecMN2e60Z_OkfklETvyX2Unig4lCR0y-_AF4rDJfx8/exec';
+        document.addEventListener('DOMContentLoaded', () => {
+            const gasWebAppUrl = 'https://script.google.com/macros/s/AKfycbya3uc7FnDYxXxj4CGB6qChpyecMN2e60Z_OkfklETvyX2Unig4lCR0y-_AF4rDJfx8/exec';
+            
+            const mapElement = document.getElementById('map');
+            const menuToggle = document.getElementById('menu-toggle');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            const locationsList = document.getElementById('locations-list');
+            const searchBox = document.getElementById('search-box');
+            const infoPanel = document.getElementById('info-panel');
+            const closeInfoPanelBtn = document.getElementById('close-info-panel');
+            
+            let map;
+            let markers = [];
+            let locationsData = [];
+            let polyline;
 
-        // --- DOM要素の取得 ---
-        const mapElement = document.getElementById('map');
-        const infoPanel = document.getElementById('info-panel');
-        const closePanelBtn = document.getElementById('close-panel');
-        const pdfDownloadBtn = document.getElementById('pdf-download');
-        const loadingOverlay = document.getElementById('loading');
-        
-        let map; // マップオブジェクトをグローバルに保持
+            async function initMap() {
+                map = L.map(mapElement, {
+                    zoomControl: true 
+                }).setView([35.681236, 139.767125], 5);
 
-        /**
-         * GASから地図データを非同期で読み込む
-         */
-        async function loadMapData() {
-            if (gasWebAppUrl === 'YOUR_GAS_WEB_APP_URL' || gasWebAppUrl === '') {
-                alert('GASのウェブアプリURLが設定されていません。scriptタグ内の「gasWebAppUrl」を修正してください。');
-                return;
-            }
-            loadingOverlay.style.display = 'flex';
-            try {
-                const response = await fetch(gasWebAppUrl);
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
                 
-                const result = await response.json();
-                if (result.status === 'success' && result.data) {
-                    initMap(result.data);
-                } else {
-                    throw new Error('APIから有効なデータが取得できませんでした: ' + (result.message || '不明なエラー'));
-                }
-            } catch (error) {
-                console.error("データの読み込みに失敗しました:", error);
-                alert("データの読み込みに失敗しました。コンソールを確認してください。");
-            } finally {
-                loadingOverlay.style.display = 'none';
+                loadMapData();
             }
-        }
 
-        /**
-         * 地図を初期化し、マーカーを配置する
-         * @param {Array} locations - GASから取得した場所データの配列
-         */
-        function initMap(locations) {
-            map = L.map(mapElement).setView([35.681236, 139.767125], 5); // 初期表示: 東京駅あたり
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }).addTo(map);
-
-            locations.forEach(location => {
-                const lat = parseFloat(location.lat);
-                const lng = parseFloat(location.lng);
-
-                if (isNaN(lat) || isNaN(lng)) {
-                    console.warn(`無効な座標のためスキップ: ${location.name}`);
-                    return; // 座標が無効なデータはスキップ
-                }
-
-                const marker = L.marker([lat, lng]).addTo(map);
-                
-                // --- ★修正箇所★ ---
-                // ピンがクリックされた時の動作を定義
-                marker.on('click', () => {
-                    // 各情報をパネルに設定
-                    document.getElementById('info-name').textContent = location.name || '---';
-                    document.getElementById('info-prefecture').textContent = location.prefecture || '---';
-                    document.getElementById('info-date').textContent = location.date || '---';
-                    document.getElementById('info-access').textContent = location.access || '---';
-                    document.getElementById('info-address').textContent = location.address || '---';
-
-                    // 取材記事のリンクを処理
-                    const articleLink = document.getElementById('info-article');
-                    const articleParagraph = articleLink.parentElement; // <p>タグを取得
-
-                    // articleUrlが存在し、空文字でないことを確認
-                    if (location.articleUrl && String(location.articleUrl).trim() !== '') {
-                        articleLink.href = location.articleUrl; // リンク先URLを設定
-                        articleLink.textContent = '記事を読む';  // 表示テキストを設定
-                        articleParagraph.style.display = '';    // <p>要素を表示状態に戻す
+            async function loadMapData() {
+                try {
+                    const response = await fetch(gasWebAppUrl);
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    const result = await response.json();
+                    if (result.status === 'success' && result.data) {
+                        locationsData = result.data.map((loc, index) => ({...loc, id: index}));
+                        addMarkersAndPolyline(locationsData);
+                        renderLocationsList(locationsData);
                     } else {
-                        // URLがない場合は行全体を非表示にする
-                        articleLink.textContent = '';
-                        articleParagraph.style.display = 'none';
+                        throw new Error('APIから有効なデータが取得できませんでした');
                     }
+                } catch (error) {
+                    console.error("データの読み込みに失敗しました:", error);
+                    alert("データの読み込みに失敗しました。");
+                }
+            }
+            
+            function addMarkersAndPolyline(locations) {
+                markers.forEach(marker => marker.remove());
+                markers = [];
+                if (polyline) polyline.remove();
+
+                const latLngs = [];
+
+                const awesomeIcon = L.AwesomeMarkers.icon({
+                    icon: 'info-sign',
+                    markerColor: 'blue',
+                    prefix: 'glyphicon'
+                });
+
+                locations.forEach(location => {
+                    const lat = parseFloat(location.lat);
+                    const lng = parseFloat(location.lng);
+                    if (isNaN(lat) || isNaN(lng)) return;
+
+                    latLngs.push([lat, lng]);
+
+                    const marker = L.marker([lat, lng], { icon: awesomeIcon }).addTo(map);
+                    marker.on('click', () => showInfoPanel(location));
                     
-                    // パネルを表示
-                    infoPanel.classList.add('active');
+                    // Store marker with its data for filtering
+                    markers.push({ marker, location });
+                });
+
+                //polyline = L.polyline(latLngs, { color: 'red', opacity: 0.7, weight: 3 }).addTo(map);
+            }
+            
+            function renderLocationsList(locations) {
+                locationsList.innerHTML = '';
+                locations.forEach(location => {
+                    const li = document.createElement('li');
+                    li.className = 'location-item';
+                    li.innerHTML = `<h3>${location.name || 'No Name'}</h3><p>${location.prefecture || '詳細不明'}</p>`;
+                    li.addEventListener('click', () => {
+                        const lat = parseFloat(location.lat);
+                        const lng = parseFloat(location.lng);
+                        map.flyTo([lat, lng], 14);
+                        sidebar.classList.remove('active');
+                        overlay.classList.remove('active');
+                    });
+                    locationsList.appendChild(li);
+                });
+            }
+
+            function showInfoPanel(location) {
+                 document.getElementById('info-name').textContent = location.name || '---';
+                document.getElementById('info-address').textContent = location.address || '---';
+                document.getElementById('info-prefecture').textContent = location.prefecture || '---';
+                document.getElementById('info-date').textContent = location.date || '---';
+                document.getElementById('info-access').textContent = location.access || '---';
+                const urlLink = document.getElementById('info-url');
+                if (location.articleUrl && location.articleUrl.trim() !== '') {
+                    urlLink.href = location.articleUrl;
+                    urlLink.textContent = location.articleUrl;
+                    urlLink.parentElement.style.display = 'block';
+                } else {
+                    urlLink.textContent = '情報がありません';
+                    urlLink.removeAttribute('href');
+                }
+                infoPanel.classList.add('active');
+            }
+
+            // --- Event Listeners ---
+            menuToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('active');
+                overlay.classList.toggle('active');
+            });
+
+            [overlay, closeInfoPanelBtn].forEach(el => {
+                el.addEventListener('click', () => {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                    infoPanel.classList.remove('active');
                 });
             });
-        }
 
-        /**
-         * 地図をPDFとしてダウンロードする
-         */
-        async function downloadMapAsPDF() {
-            const loadingText = pdfDownloadBtn.textContent;
-            pdfDownloadBtn.textContent = '生成中...';
-            pdfDownloadBtn.disabled = true;
+            searchBox.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                const filteredLocationIds = new Set(
+                    locationsData.filter(loc => 
+                        (loc.name && loc.name.toLowerCase().includes(searchTerm)) ||
+                        (loc.prefecture && loc.prefecture.toLowerCase().includes(searchTerm))
+                    ).map(l => l.id)
+                );
+                
+                renderLocationsList(locationsData.filter(loc => filteredLocationIds.has(loc.id)));
 
-            try {
-                // Leafletのクレジットを一時的に表示（キャプチャに含めるため）
-                document.querySelector('.leaflet-control-container').style.display = 'block';
-
-                const canvas = await html2canvas(mapElement, {
-                    useCORS: true,
-                    logging: false,
-                    onclone: (doc) => {
-                        // クローンされたDOMでマーカーが正しく表示されるように調整
-                        const markers = doc.querySelectorAll('.leaflet-marker-icon');
-                        markers.forEach(marker => {
-                           marker.style.marginTop = (-marker.offsetHeight) + 'px';
-                        });
+                markers.forEach(({ marker, location }) => {
+                    const el = marker.getElement();
+                    if (el) {
+                       el.style.display = filteredLocationIds.has(location.id) ? '' : 'none';
                     }
                 });
+            });
 
-                const imgData = canvas.toDataURL('image/png');
-                const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF({
-                    orientation: canvas.width > canvas.height ? 'l' : 'p',
-                    unit: 'px',
-                    format: [canvas.width, canvas.height]
-                });
-                pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-                pdf.save('慰霊地マップ.pdf');
-            } catch (error) {
-                console.error('PDFの生成に失敗しました:', error);
-                alert('PDFの生成に失敗しました。');
-            } finally {
-                pdfDownloadBtn.textContent = loadingText;
-                pdfDownloadBtn.disabled = false;
-            }
-        }
-
-        // --- イベントリスナー ---
-        closePanelBtn.addEventListener('click', () => infoPanel.classList.remove('active'));
-        mapElement.addEventListener('click', (e) => {
-            // マップ自体がクリックされたらパネルを閉じる（マーカークリックと競合しないように）
-             if (e.target.id === 'map') {
-                infoPanel.classList.remove('active');
-             }
+            initMap();
         });
-        pdfDownloadBtn.addEventListener('click', downloadMapAsPDF);
-        
-        // --- 初期読み込み ---
-        document.addEventListener('DOMContentLoaded', loadMapData);
     </script>
 </body>
 </html>
