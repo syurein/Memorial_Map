@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Memory Maps</title>
-    <!-- Leaflet and related plugins CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"/>
@@ -35,7 +34,6 @@
             flex-direction: column;
             height: 100%;
             position: relative;
-            /* max-width: 420px; */ /* スマートフォンサイズに制限 */
             margin: 0 auto;
             background: #fff;
             box-shadow: 0 0 20px rgba(0,0,0,0.1);
@@ -49,192 +47,73 @@
 
         /* Header */
         header {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            right: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 15px;
-            background-color: var(--white-color);
-            border-radius: 10px;
-            box-shadow: 0 2px 8px var(--shadow-color);
-            z-index: 1001;
+            position: absolute; top: 10px; left: 10px; right: 10px;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 15px; background-color: var(--white-color);
+            border-radius: 10px; box-shadow: 0 2px 8px var(--shadow-color); z-index: 1001;
         }
-
-        .header-title {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .header-title h1 {
-            margin: 0;
-            font-size: 1.1em;
-            font-weight: 600;
-        }
-
-        .map-pin-icon {
-            color: var(--primary-color);
-        }
-
+        .header-title { display: flex; align-items: center; gap: 8px; }
+        .header-title h1 { margin: 0; font-size: 1.1em; font-weight: 600; }
+        .map-pin-icon { color: var(--primary-color); }
         .add-button {
-            width: 32px;
-            height: 32px;
-            background-color: var(--white-color);
-            color: var(--primary-color);
-            border: 1px solid var(--border-color);
-            border-radius: 50%;
-            font-size: 20px;
-            font-weight: bold;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            transition: background-color 0.3s;
+            width: 32px; height: 32px; background-color: var(--white-color); color: var(--primary-color);
+            border: 1px solid var(--border-color); border-radius: 50%; font-size: 20px; font-weight: bold;
+            display: flex; justify-content: center; align-items: center; cursor: pointer; transition: background-color 0.3s;
         }
-        .add-button:hover {
-            background-color: var(--primary-light-color);
-        }
-
+        .add-button:hover { background-color: var(--primary-light-color); }
+        
         /* List View */
         .list-view {
-            position: absolute;
-            top: 65px; /* Header height + margin */
-            left: 10px;
-            right: 10px;
-            bottom: 75px; /* Footer height + margin */
-            background-color: var(--white-color);
-            border-radius: 10px;
-            box-shadow: 0 2px 8px var(--shadow-color);
-            z-index: 1000;
-            padding: 15px;
-            display: none; /* Initially hidden */
-            flex-direction: column;
-            gap: 15px;
+            position: absolute; top: 65px; left: 10px; right: 10px; bottom: 75px;
+            background-color: var(--white-color); border-radius: 10px; box-shadow: 0 2px 8px var(--shadow-color);
+            z-index: 1000; padding: 15px; display: none; flex-direction: column; gap: 15px;
         }
-        .list-view.active {
-            display: flex; /* Show when active */
-        }
-
-        .search-container {
-            position: relative;
-        }
+        .list-view.active { display: flex; }
+        .search-container { position: relative; }
         #search-box {
-            width: 100%;
-            padding: 10px 15px 10px 40px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            font-size: 1em;
-            box-sizing: border-box;
+            width: 100%; padding: 10px 15px 10px 40px; border: 1px solid var(--border-color);
+            border-radius: 8px; font-size: 1em; box-sizing: border-box;
         }
         .search-container::before {
-            content: '🔍';
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--light-text-color);
+            content: '🔍'; position: absolute; left: 15px; top: 50%;
+            transform: translateY(-50%); color: var(--light-text-color);
         }
-
         #add-new-location-btn {
-            width: 100%;
-            padding: 12px;
-            background-color: var(--white-color);
-            color: var(--primary-color);
-            border: 1px solid var(--primary-color);
-            border-radius: 8px;
-            font-size: 1em;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.3s;
+            width: 100%; padding: 12px; background-color: var(--white-color); color: var(--primary-color);
+            border: 1px solid var(--primary-color); border-radius: 8px; font-size: 1em; font-weight: 500;
+            cursor: pointer; transition: background-color 0.3s;
         }
-        #add-new-location-btn:hover {
-            background-color: var(--primary-light-color);
-        }
-
-        #locations-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            overflow-y: auto;
-            flex-grow: 1;
-        }
+        #add-new-location-btn:hover { background-color: var(--primary-light-color); }
+        #locations-list { list-style: none; padding: 0; margin: 0; overflow-y: auto; flex-grow: 1; }
         .location-item {
-            display: flex;
-            align-items: center;
-            padding: 10px 5px;
-            border-bottom: 1px solid var(--border-color);
-            cursor: pointer;
-            transition: background-color 0.2s;
+            display: flex; align-items: center; padding: 10px 5px;
+            border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background-color 0.2s;
         }
-        .location-item:last-child {
-            border-bottom: none;
-        }
-        .location-item:hover {
-            background-color: var(--primary-light-color);
-        }
+        .location-item:last-child { border-bottom: none; }
+        .location-item:hover { background-color: var(--primary-light-color); }
         .location-item img {
-            width: 50px;
-            height: 50px;
-            border-radius: 8px;
-            margin-right: 15px;
-            object-fit: cover;
-            background-color: #eee; /* Placeholder color */
+            width: 50px; height: 50px; border-radius: 8px;
+            margin-right: 15px; object-fit: cover; background-color: #eee;
         }
-        .location-info h3 {
-            margin: 0 0 2px;
-            font-size: 1em;
-            font-weight: 600;
-        }
-        .location-info p {
-            margin: 0;
-            font-size: 0.85em;
-            color: var(--light-text-color);
-        }
-        .location-options {
-            margin-left: auto;
-            color: var(--light-text-color);
-        }
-
+        .location-info h3 { margin: 0 0 2px; font-size: 1em; font-weight: 600; }
+        .location-info p { margin: 0; font-size: 0.85em; color: var(--light-text-color); }
+        .location-options { margin-left: auto; color: var(--light-text-color); }
 
         /* Footer */
         footer {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            padding: 5px 0;
-            background-color: var(--white-color);
-            box-shadow: 0 -2px 8px var(--shadow-color);
-            z-index: 1001;
+            position: absolute; bottom: 0; left: 0; right: 0; display: flex;
+            justify-content: space-around; align-items: center; padding: 5px 0;
+            background-color: var(--white-color); box-shadow: 0 -2px 8px var(--shadow-color); z-index: 1001;
         }
         footer button {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 8px 15px;
-            font-size: 0.8em;
-            color: var(--light-text-color);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 2px;
-            transition: color 0.3s;
+            background: none; border: none; cursor: pointer; padding: 8px 15px;
+            font-size: 0.8em; color: var(--light-text-color); display: flex; flex-direction: column;
+            align-items: center; gap: 2px; transition: color 0.3s;
         }
-        footer button.active {
-            color: var(--primary-color);
-        }
-        footer button svg {
-            width: 22px;
-            height: 22px;
-        }
-
-        /* Info Panel (unchanged for now) */
+        footer button.active { color: var(--primary-color); }
+        footer button svg { width: 22px; height: 22px; }
+        
+        /* Info Panel */
         .info-panel {
             position: fixed; top: 0; right: 0; width: 350px; height: 100%;
             background-color: var(--white-color); box-shadow: -2px 0 15px var(--shadow-color);
@@ -252,14 +131,48 @@
         .info-panel-content p { margin: 0 0 18px; line-height: 1.6; }
         .info-panel-content strong { color: var(--text-color); display: block; margin-bottom: 4px; font-size: 0.9em; text-transform: uppercase; color: #888; }
         .info-panel-content a { color: var(--primary-color); text-decoration: none; word-break: break-all; }
-
-        /* Overlay (unchanged) */
+        
+        /* Overlay */
         .overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.4); opacity: 0; visibility: hidden;
             transition: opacity 0.4s, visibility 0s 0.4s; z-index: 1999;
         }
         .overlay.active { opacity: 1; visibility: visible; transition: opacity 0.4s; }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            display: none; /* 初期状態は非表示 */
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--primary-light-color);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        .loading-text {
+            margin-top: 15px;
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 </head>
 <body>
@@ -269,31 +182,34 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="map-pin-icon"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
                 <h1>Memory Maps</h1>
             </div>
-            
         </header>
 
         <main id="map"></main>
+
+        <div id="loading-spinner" class="loading-spinner">
+            <div class="spinner"></div>
+            <div class="loading-text">データを読み込み中...</div>
+        </div>
 
         <div id="list-view" class="list-view">
             <div class="search-container">
                 <input type="text" id="search-box" placeholder="場所を検索...">
             </div>
-            <!-- <button id="add-new-location-btn">新しい拠点を追加</button> -->
             <ul id="locations-list"></ul>
         </div>
 
         <div id="info-panel" class="info-panel">
              <div class="info-panel-header">
-                <h2 id="info-name">場所の名前</h2>
-                <button id="close-info-panel" class="close-btn">&times;</button>
-            </div>
-            <div class="info-panel-content">
-                <p><strong>住所:</strong> <span id="info-address">---</span></p>
-                <p><strong>都道府県:</strong> <span id="info-prefecture">---</span></p>
-                <p><strong>関連URL:</strong> <a id="info-url" href="#" target="_blank" rel="noopener noreferrer"></a></p>
-                <p><strong>訪問日など:</strong> <span id="info-date">---</span></p>
-                <p><strong>アクセス:</strong> <span id="info-access">---</span></p>
-            </div>
+                  <h2 id="info-name">場所の名前</h2>
+                  <button id="close-info-panel" class="close-btn">&times;</button>
+             </div>
+             <div class="info-panel-content">
+                  <p><strong>住所:</strong> <span id="info-address">---</span></p>
+                  <p><strong>都道府県:</strong> <span id="info-prefecture">---</span></p>
+                  <p><strong>関連URL:</strong> <a id="info-url" href="#" target="_blank" rel="noopener noreferrer"></a></p>
+                  <p><strong>訪問日など:</strong> <span id="info-date">---</span></p>
+                  <p><strong>アクセス:</strong> <span id="info-access">---</span></p>
+             </div>
         </div>
         <div id="overlay" class="overlay"></div>
     </div>
@@ -306,7 +222,6 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
             <span>リスト</span>
         </button>
-        
     </footer>
     
     <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -323,7 +238,7 @@
             const closeInfoPanelBtn = document.getElementById('close-info-panel');
             const mapViewBtn = document.getElementById('map-view-btn');
             const listViewBtn = document.getElementById('list-view-btn');
-            //const settingsBtn = document.getElementById('settings-btn');
+            const loadingSpinner = document.getElementById('loading-spinner');
             
             let map;
             let markers = [];
@@ -332,10 +247,10 @@
             async function initMap() {
                 map = L.map(mapElement, {
                     zoomControl: false
-                }).setView([35.681236, 139.767125], 5);
+                }).setView([36.061556, 136.219583], 5);
 
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 }).addTo(map);
                 
                 L.control.zoom({ position: 'bottomright' }).addTo(map);
@@ -344,6 +259,7 @@
             }
 
             async function loadMapData() {
+                loadingSpinner.style.display = 'flex';
                 try {
                     const response = await fetch(gasWebAppUrl);
                     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -358,6 +274,8 @@
                 } catch (error) {
                     console.error("データの読み込みに失敗しました:", error);
                     alert("データの読み込みに失敗しました。");
+                } finally {
+                    loadingSpinner.style.display = 'none';
                 }
             }
             
@@ -388,7 +306,6 @@
                 locations.forEach(location => {
                     const li = document.createElement('li');
                     li.className = 'location-item';
-                    // Adapted to show name and prefecture from GAS data
                     li.innerHTML = `
                         <div class="location-info">
                             <h3>${location.name || 'No Name'}</h3>
@@ -442,10 +359,6 @@
             mapViewBtn.addEventListener('click', showMapView);
             listViewBtn.addEventListener('click', showListView);
             
-            /* settingsBtn.addEventListener('click', () => {
-                alert('設定機能はまだ実装されていません。');
-            }); */
-
             closeInfoPanelBtn.addEventListener('click', () => {
                 infoPanel.classList.remove('active');
             });
@@ -474,4 +387,3 @@
     </script>
 </body>
 </html>
-
