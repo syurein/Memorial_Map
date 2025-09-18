@@ -55,12 +55,12 @@
         .header-title { display: flex; align-items: center; gap: 8px; }
         .header-title h1 { margin: 0; font-size: 1.1em; font-weight: 600; }
         .map-pin-icon { color: var(--primary-color); }
-        .add-button {
+        .header-button {
             width: 32px; height: 32px; background-color: var(--white-color); color: var(--primary-color);
-            border: 1px solid var(--border-color); border-radius: 50%; font-size: 20px; font-weight: bold;
+            border: 1px solid var(--border-color); border-radius: 50%; font-size: 16px;
             display: flex; justify-content: center; align-items: center; cursor: pointer; transition: background-color 0.3s;
         }
-        .add-button:hover { background-color: var(--primary-light-color); }
+        .header-button:hover { background-color: var(--primary-light-color); }
         
         /* List View */
         .list-view {
@@ -182,13 +182,16 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="map-pin-icon"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
                 <h1>Memory Maps</h1>
             </div>
-        </header>
+            <button id="download-map-btn" class="header-button" title="地図をダウンロード">
+                <i class="fa fa-download"></i>
+            </button>
+            </header>
 
         <main id="map"></main>
 
         <div id="loading-spinner" class="loading-spinner">
             <div class="spinner"></div>
-            <div class="loading-text">データを読み込み中...</div>
+            <div id="loading-text" class="loading-text">データを読み込み中...</div>
         </div>
 
         <div id="list-view" class="list-view">
@@ -226,6 +229,8 @@
     
     <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-image@0.4.0/leaflet-image.min.js"></script>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const gasWebAppUrl = 'https://script.google.com/macros/s/AKfycbya3uc7FnDYxXxj4CGB6qChpyecMN2e60Z_OkfklETvyX2Unig4lCR0y-_AF4rDJfx8/exec';
@@ -239,26 +244,35 @@
             const mapViewBtn = document.getElementById('map-view-btn');
             const listViewBtn = document.getElementById('list-view-btn');
             const loadingSpinner = document.getElementById('loading-spinner');
+            const loadingText = document.getElementById('loading-text');
+            const downloadMapBtn = document.getElementById('download-map-btn');
             
             let map;
             let markers = [];
             let locationsData = [];
+            let awesomeMarkersLayer = L.layerGroup(); // Layer for AwesomeMarkers
 
             async function initMap() {
                 map = L.map(mapElement, {
-                    zoomControl: false
+                    zoomControl: false,
+                    preferCanvas: true // May improve performance for leaflet-image
                 }).setView([36.061556, 136.219583], 5);
 
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                    crossOrigin: 'anonymous'
                 }).addTo(map);
                 
                 L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+                // Add the layer group to the map
+                awesomeMarkersLayer.addTo(map);
 
                 loadMapData();
             }
 
             async function loadMapData() {
+                loadingText.textContent = 'データを読み込み中...';
                 loadingSpinner.style.display = 'flex';
                 try {
                     const response = await fetch(gasWebAppUrl);
@@ -280,7 +294,8 @@
             }
             
             function addMarkers(locations) {
-                markers.forEach(marker => marker.remove());
+                // Clear existing markers from the layer and the array
+                awesomeMarkersLayer.clearLayers();
                 markers = [];
 
                 const awesomeIcon = L.AwesomeMarkers.icon({
@@ -294,9 +309,10 @@
                     const lng = parseFloat(location.lng);
                     if (isNaN(lat) || isNaN(lng)) return;
 
-                    const marker = L.marker([lat, lng], { icon: awesomeIcon }).addTo(map);
+                    const marker = L.marker([lat, lng], { icon: awesomeIcon });
                     marker.on('click', () => showInfoPanel(location));
                     
+                    awesomeMarkersLayer.addLayer(marker); // Add marker to the layer group
                     markers.push({ marker, location });
                 });
             }
@@ -347,12 +363,14 @@
                 listView.classList.remove('active');
                 mapViewBtn.classList.add('active');
                 listViewBtn.classList.remove('active');
+                awesomeMarkersLayer.addTo(map); // Show markers on map view
             }
 
             function showListView() {
                 listView.classList.add('active');
                 mapViewBtn.classList.remove('active');
                 listViewBtn.classList.add('active');
+                map.removeLayer(awesomeMarkersLayer); // Optionally hide markers on list view
             }
 
             // --- Event Listeners ---
@@ -372,14 +390,58 @@
                 
                 renderLocationsList(filteredLocations);
 
+                // Filter markers on the map
+                awesomeMarkersLayer.clearLayers();
                 const filteredIds = new Set(filteredLocations.map(l => l.id));
                 markers.forEach(({ marker, location }) => {
-                    const el = marker.getElement();
-                    if (el) {
-                       el.style.display = filteredIds.has(location.id) ? '' : 'none';
+                    if (filteredIds.has(location.id)) {
+                        awesomeMarkersLayer.addLayer(marker);
                     }
                 });
             });
+            
+            // ▼▼▼ MODIFIED Download button click event ▼▼▼
+            downloadMapBtn.addEventListener('click', () => {
+                loadingText.textContent = '画像を生成中...';
+                loadingSpinner.style.display = 'flex';
+
+                // 1. Create a temporary layer for standard markers
+                const tempMarkers = L.layerGroup();
+                markers.forEach(({ marker }) => {
+                    // Check if the marker is currently on the map
+                    if (map.hasLayer(awesomeMarkersLayer) && awesomeMarkersLayer.hasLayer(marker)) {
+                        L.marker(marker.getLatLng()).addTo(tempMarkers);
+                    }
+                });
+
+                // 2. Hide the AwesomeMarkers and show the temporary standard markers
+                map.removeLayer(awesomeMarkersLayer);
+                map.addLayer(tempMarkers);
+
+                leafletImage(map, (err, canvas) => {
+                    // 4. IMPORTANT: Restore original markers, regardless of success or failure
+                    map.removeLayer(tempMarkers);
+                    map.addLayer(awesomeMarkersLayer);
+
+                    if (err) {
+                        console.error('画像生成エラー:', err);
+                        alert('画像の生成に失敗しました。');
+                        loadingSpinner.style.display = 'none';
+                        return;
+                    }
+
+                    // 3. If successful, trigger the download
+                    const link = document.createElement('a');
+                    link.href = canvas.toDataURL('image/png');
+                    link.download = 'memory-map.png';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    loadingSpinner.style.display = 'none';
+                });
+            });
+            // ▲▲▲ MODIFIED Download button click event ▲▲▲
 
             initMap();
             showMapView();
