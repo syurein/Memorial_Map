@@ -180,7 +180,7 @@
         <header>
             <div class="header-title">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="map-pin-icon"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                <h1>Memory Maps</h1>
+                <h1>慰霊地マップ</h1>
             </div>
             <button id="download-map-btn" class="header-button" title="地図をダウンロード">
                 <i class="fa fa-download"></i>
@@ -346,6 +346,7 @@
                 document.getElementById('info-address').textContent = location.address || '---';
                 document.getElementById('info-prefecture').textContent = location.prefecture || '---';
                 document.getElementById('info-date').textContent = location.date || '---';
+                console.log(location.date)
                 document.getElementById('info-access').textContent = location.access || '---';
                 const urlLink = document.getElementById('info-url');
                 if (location.articleUrl && location.articleUrl.trim() !== '') {
